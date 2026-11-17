@@ -1,3 +1,4 @@
+
 import pathlib
 import streamlit as st
 import streamlit.components.v1 as components
@@ -29,7 +30,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-html_path = pathlib.Path(__file__).parent / "assets" / "game_view.html"
+# HTML 파일 경로 수정
+BASE_DIR = pathlib.Path(__file__).parent
+html_path = BASE_DIR / "game_view.html"
+
 game_html = html_path.read_text(encoding="utf-8")
 
 components.html(game_html, height=705, scrolling=False)
