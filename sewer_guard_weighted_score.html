@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEWER GUARD // OMORI PALETTE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DungGeunMo&family=Press+Start+2P&display=swap');
+:root{--void:#0d0b14;--head:#191528;--white:#f7f5ff;--ink:#110e1b;--lav:#b8a9ff;--blue:#8fa8ff;--mint:#9ef0d0;--pink:#ffb3d9;--peach:#ffd2a6;--red:#ff6b8b}
+*{box-sizing:border-box;user-select:none}
+body{margin:0;background:var(--void);color:var(--white);font-family:'DungGeunMo',monospace;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
+#game-shell{position:relative;width:min(960px,100vw);height:min(680px,100vh);background:var(--head);border:4px solid var(--white);box-shadow:0 0 0 4px var(--ink),0 0 36px #b8a9ff40;overflow:hidden}
+canvas{display:block;max-width:100%}
+#scene-canvas{width:100%;height:100%}
+#game-shell:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:50;background:radial-gradient(circle,transparent 62%,#0d0b1488),repeating-linear-gradient(0deg,#ffffff06 0 1px,transparent 1px 3px)}
+.omori-box{background:var(--ink);border:3px solid var(--white);box-shadow:4px 4px 0 #0d0b14d9;color:var(--white);padding:14px 18px}
+.omori-tag{display:inline-block;background:var(--white);color:var(--ink);padding:2px 10px;font-weight:bold;font-size:15px;margin-bottom:8px}
+#title-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:34px 24px 44px;z-index:20;transition:transform 1.2s cubic-bezier(.22,1,.36,1),opacity 1.1s}
+#title-overlay.zoom-out{transform:scale(.24) translateY(28px);opacity:0;pointer-events:none}
+.title-banner{background:#110e1be0;border:3px solid var(--white);padding:16px 32px;text-align:center;box-shadow:6px 6px 0 var(--lav)}
+.title-banner h1{margin:0;font-size:clamp(20px,4vw,36px);text-shadow:3px 3px #5e4b99}
+.title-banner p{margin:8px 0 0;font-size:16px;color:var(--lav)}
+.pixel-btn{font-family:inherit;font-size:22px;padding:12px 34px;background:var(--ink);color:var(--white);border:3px solid var(--white);cursor:pointer;box-shadow:4px 4px 0 var(--lav)}
+.pixel-btn:hover{background:var(--lav);color:var(--ink);transform:translate(-2px,-2px)}
+#dialogue-bar{position:absolute;left:24px;right:24px;bottom:18px;min-height:112px;z-index:30;display:none;cursor:pointer}
+#dialogue-text{font-size:19px;line-height:1.55;margin:0;white-space:pre-line}
+.blink-cursor{float:right;color:var(--pink);animation:blink .9s infinite}
+@keyframes blink{50%{opacity:0}}
+#room-hotspots{display:none}
+.hotspot{position:absolute;border:2px dashed #f7f5ff59;background:#b8a9ff0d;cursor:pointer;z-index:15;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:13px;color:transparent}
+.hotspot:hover{border:2px solid var(--mint);background:#9ef0d024;color:var(--white)}
+.modal-backdrop{position:absolute;inset:0;background:#0d0b14c7;display:none;justify-content:center;align-items:center;z-index:40;overflow:auto;padding:12px}
+.modal-window{width:820px;max-width:100%;max-height:96%;overflow:auto;background:var(--ink);border:4px solid var(--white);box-shadow:8px 8px 0 var(--blue);padding:20px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--white);padding-bottom:10px;margin-bottom:14px;gap:10px}
+.modal-title{font-size:21px;color:var(--lav)}
+.close-btn{background:var(--red);color:var(--ink);border:2px solid var(--white);font-family:inherit;font-size:16px;padding:4px 12px;cursor:pointer}
+.pc-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:18px}
+.dataset-card{border:2px solid #59507a;background:#181426;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.dataset-card.selected{border:2px solid var(--mint);background:#221d38;box-shadow:3px 3px 0 var(--mint)}
+.slider-row{margin:12px 0}
+.slider-row label{display:flex;justify-content:space-between;font-size:16px;margin-bottom:4px;color:var(--peach)}
+input[type=range]{width:100%;accent-color:var(--lav)}
+.info-content{font-size:18px;line-height:1.7;color:var(--white)}.info-content h3{color:var(--mint);font-size:19px;margin:18px 0 6px}.info-example{background:#181426;border:2px solid #59507a;padding:12px 14px;margin:12px 0;color:var(--peach)}
+.pipe-select-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.calendar-large-grid{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:12px;margin-top:18px}.calendar-day{min-height:112px;border:3px solid #8d84ab;background:#211b36;padding:12px;display:flex;flex-direction:column;justify-content:space-between}.calendar-day.current{border-color:var(--lav);box-shadow:0 0 0 3px #b8a9ff55}.calendar-day .day-label{font-size:18px;color:var(--peach)}.calendar-day .day-result{font-size:34px;text-align:center;color:var(--mint)}.calendar-day .day-result.fail{color:var(--red)}.calendar-day .day-result.partial{color:var(--peach)}.calendar-day .day-result.pending{color:#8d84ab;font-size:22px}@media(max-width:560px){.calendar-large-grid{grid-template-columns:repeat(2,minmax(100px,1fr))}}
+.pipe-btn{font-family:inherit;font-size:16px;padding:8px 4px;background:#1b172b;color:var(--white);border:2px solid var(--white);cursor:pointer}
+.pipe-btn:hover{background:var(--pink);color:var(--ink)}
+#ending-overlay{position:absolute;inset:0;background:var(--ink);display:none;flex-direction:column;justify-content:space-between;padding:28px;z-index:45}
+.ending-dialogue{background:var(--ink);border:3px solid var(--white);padding:18px 22px;font-size:19px;line-height:1.65;min-height:175px;white-space:pre-line}
+@media(max-width:700px){.pc-grid{grid-template-columns:1fr}.modal-window{padding:12px}.title-banner{padding:12px}.hotspot{transform:scale(.8);transform-origin:top left}#dialogue-bar{left:10px;right:10px;bottom:10px}.ending-dialogue{font-size:15px}}
+</style>
+</head>
+<body>
+<div id="game-shell">
+<canvas id="scene-canvas" width="960" height="680"></canvas>
+
+<div id="title-overlay">
+  <div class="title-banner"><h1>하수관 관제일지 // GRADIENT</h1><p>~ 7일간의 지하 수로 이상 탐지 근무 ~</p></div>
+  <button class="pixel-btn" id="start-btn" type="button">▶ START</button>
+</div>
+
+<div id="room-hotspots">
+  <button class="hotspot" style="left:175px;top:275px;width:132px;height:102px" onclick="openCctv(0)">CAM 01</button>
+  <button class="hotspot" style="left:322px;top:275px;width:132px;height:102px" onclick="openCctv(1)">CAM 02</button>
+  <button class="hotspot" style="left:469px;top:275px;width:132px;height:102px" onclick="openCctv(2)">CAM 03</button>
+  <button class="hotspot" style="left:616px;top:275px;width:132px;height:102px" onclick="openCctv(3)">CAM 04</button>
+  <button class="hotspot" style="left:768px;top:250px;width:146px;height:165px" onclick="openPcModal()">AI 학습 PC</button>
+  <button class="hotspot" style="left:315px;top:76px;width:330px;height:130px" onclick="openMemoModal()">메모보드</button>
+  <button class="hotspot" style="left:24px;top:68px;width:132px;height:160px" onclick="openCalendarModal()">달력 확대</button>
+</div>
+
+<div id="dialogue-bar" class="omori-box" onclick="advanceDialogue()">
+  <div class="omori-tag" id="dialogue-speaker">나</div>
+  <p id="dialogue-text"></p><span class="blink-cursor">▼</span>
+</div>
+
+<div id="cctv-modal" class="modal-backdrop">
+ <div class="modal-window">
+  <div class="modal-header"><span class="modal-title" id="cctv-modal-title">CAM 01</span><button class="close-btn" onclick="closeModals()">닫기 [X]</button></div>
+  <div style="display:flex;justify-content:center;align-items:center">
+   <canvas id="cctv-canvas" width="640" height="400" style="width:100%;max-width:720px;height:auto;border:3px solid #f7f5ff;background:#080710"></canvas>
+  </div>
+  <button id="cctv-select-btn" class="pixel-btn" style="display:none;width:100%;margin-top:12px;font-size:18px" onclick="confirmCctvSelection()">이 하수관으로 최종 보고</button>
+ </div>
+</div>
+
+<div id="pc-modal" class="modal-backdrop">
+ <div class="modal-window">
+  <div class="modal-header"><span class="modal-title">💻 SEWER-AI v1.04 // 경사하강법 이상 탐지기</span><button class="close-btn" onclick="closeModals()">닫기 [X]</button></div>
+  <div class="omori-box" style="margin-bottom:14px;line-height:1.55"><div class="omori-tag">오늘 감지된 하수도 이상 보고</div><p id="pc-problem-text" style="margin:4px 0 8px;font-size:17px">CCTV 관측을 바탕으로 오늘의 이상 징후가 표시됩니다.</p><div id="pc-problem-metrics" style="font-size:15px;color:var(--mint)"></div></div>
+  <div class="pc-grid">
+   <div>
+    <div style="color:var(--lav);margin-bottom:6px">[1단계] 오늘 관측된 이상 유형에 맞는 학습 데이터 선택</div>
+    <div class="dataset-card selected" id="ds-0" onclick="selectDataset(0)"><strong>① 유속 · 수압 시계열 데이터</strong><div>균열 누수, 역류, 펌프 압력 급강하 탐지</div></div>
+    <div class="dataset-card" id="ds-1" onclick="selectDataset(1)"><strong>② 탁도 · 부유 슬러지 이미지 데이터</strong><div>퇴적물 막힘, 토사 유입, 부유물 적체 탐지</div></div>
+    <div class="dataset-card" id="ds-2" onclick="selectDataset(2)"><strong>③ pH · 화학 폐수 성분 스펙트럼</strong><div>산성/염기성 무단 방류 탐지</div></div>
+    <div class="slider-row"><label><span>학습률 (Learning Rate, α)</span><span id="lr-val">0.15</span></label><input type="range" id="lr-slider" min="0.01" max="0.95" step="0.01" value="0.15" oninput="updateGdParams()"></div>
+    <div class="slider-row"><label><span>반복 학습 횟수 (Epochs)</span><span id="epoch-val">25회</span></label><input type="range" id="epoch-slider" min="5" max="60" value="25" oninput="updateGdParams()"></div>
+    <button class="pixel-btn" style="width:100%;font-size:18px;padding:9px" onclick="runGradientDescent()">▶ 경사하강법 학습 실행</button>
+   </div>
+   <div style="display:flex;flex-direction:column;justify-content:space-between;gap:14px">
+    <div><div style="color:var(--mint);margin-bottom:6px">[2단계] 손실(Loss) & 정확도(Accuracy) 추이</div><canvas id="gd-graph" width="365" height="205" style="width:100%;border:2px solid #f7f5ff;background:#120f1d"></canvas></div>
+    <div class="omori-box" style="font-size:15px;line-height:1.5;color:var(--peach)"><div style="color:var(--pink);margin-bottom:6px">[3단계] CCTV 화면에서 결과 확인</div>학습을 실행하면 분석 결과가 CCTV 화면에 반영됩니다. 색이 바뀐 하수관을 직접 찾아 해당 모니터를 눌러주세요.</div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div id="memo-modal" class="modal-backdrop">
+ <div class="modal-window" style="max-width:720px">
+  <div class="modal-header"><span class="modal-title">📌 경사하강법이란?</span><button class="close-btn" onclick="closeModals()">닫기 [X]</button></div>
+  <div class="info-content">
+   <p><strong style="color:var(--mint)">경사하강법(Gradient Descent)</strong>은 인공지능이 예측한 값과 실제 값의 차이인 <strong>오차(Loss)</strong>를 줄이기 위해 사용하는 학습 방법이야.</p>
+   <h3>1. 어떻게 작동할까?</h3>
+   <p>인공지능은 먼저 예측을 하고, 그 결과가 실제 정답과 얼마나 다른지 계산해. 그다음 오차가 작아지는 방향을 찾아 조금씩 값을 조정해.</p>
+   <div class="info-example">① 예측하기 → ② 오차 계산하기 → ③ 오차가 줄어드는 방향으로 조정하기 → ④ 이 과정을 반복하기</div>
+   <h3>2. 기울기와 학습률</h3>
+   <p><strong>기울기(Gradient)</strong>는 오차가 어느 방향으로 얼마나 변하는지 알려줘. 경사하강법은 기울기의 반대 방향으로 이동해 오차가 작아지는 지점을 찾아가.</p>
+   <p><strong>학습률(Learning Rate)</strong>은 한 번에 얼마나 이동할지 정하는 값이야. 너무 크면 최솟값을 지나쳐 학습이 불안정해질 수 있고, 너무 작으면 학습에 시간이 오래 걸릴 수 있어.</p>
+   <h3>3. 이 게임에서는?</h3>
+   <p>하수관의 유속·수압, 탁도, 화학 성분 데이터를 학습해 이상 징후를 구분하는 과정에 경사하강법이 사용돼. 오차가 충분히 줄어들면 AI가 이상이 발생한 하수관을 더 정확하게 예측할 수 있어.</p>
+  </div>
+ </div>
+</div>
+
+<div id="calendar-modal" class="modal-backdrop">
+ <div class="modal-window" style="max-width:760px">
+  <div class="modal-header"><span class="modal-title">📅 근무 기록 달력</span><button class="close-btn" onclick="closeModals()">닫기 [X]</button></div>
+  <p style="color:var(--peach);font-size:16px">벽면 달력을 클릭하면 이 확대 화면을 열 수 있어. O는 예측 성공, X는 예측 실패를 의미해.</p>
+  <div id="calendar-large-grid" class="calendar-large-grid"></div>
+ </div>
+</div>
+
+<div id="ending-overlay">
+ <canvas id="ending-canvas" width="904" height="390" style="width:100%;border:3px solid #f7f5ff"></canvas>
+ <div class="ending-dialogue"><div class="omori-tag" id="ending-tag">7일차 근무 결산</div><div id="ending-text"></div></div>
+ <div style="text-align:right"><button class="pixel-btn" id="ending-action-btn" onclick="handleEndingNext()">다음으로 ▶</button></div>
+</div>
+</div>
+
+<script>
+'use strict';
+const canvas=document.getElementById('scene-canvas');
+const ctx=canvas.getContext('2d');
+let screenState='TITLE',frame=0,day=1,week=1;
+let calendarResults=Array(7).fill(null),dialogueQueue=[],selectedDataset=0;
+let hasTrainedToday=false,lastAccuracy=0,todayScenario=null,dialogueFinishedCallback=null;
+let revealedPipeIndex=null,trainingWasCorrect=false,activeCctvIndex=null;
+const SCENARIO_TEMPLATES=[
+ {type:0,typeName:'유속·수압 이상',clue:'수면이 비정상적으로 소용돌이치며 배수 압력이 뚝 떨어졌다. 관벽 균열로 인한 급격한 유속 변화가 의심된다.',normalClue:'일정한 속도로 맑은 물이 흐르고 있다. 수압 계기판 바늘도 안정적이다.',metricsBad:'유속: 0.4 m/s (급감) | 수압: 0.3 bar',metricsOk:'유속: 2.1 m/s (정상) | 수압: 1.8 bar'},
+ {type:1,typeName:'탁도·슬러지 적체',clue:'검붉은 진흙과 부유 슬러지가 덩어리째 떠내려오며 카메라 렌즈 앞을 흐리게 가리고 있다.',normalClue:'바닥 자갈이 보일 정도로 투명도가 유지되고 있다. 부유물 없음.',metricsBad:'탁도: 480 NTU (위험) | 슬러지: 78%',metricsOk:'탁도: 14 NTU (정상) | 슬러지: 6%'},
+ {type:2,typeName:'화학 폐수 유입',clue:'물 표면에서 보랏빛 기포가 올라오며 화학 약품 반응이 감지되었다. 무단 방류 흔적이다.',normalClue:'기포나 변색 없이 중성 수질을 유지하고 있다. 특이 반응 없음.',metricsBad:'산성도: pH 2.9 (강산성) | VOC: 경고',metricsOk:'산성도: pH 7.1 (중성) | VOC: 안전'}
+];
+function pxRect(c,x,y,w,h,color){c.fillStyle=color;c.fillRect(Math.floor(x),Math.floor(y),Math.floor(w),Math.floor(h))}
+function line(c,x1,y1,x2,y2,color,lw=2){c.strokeStyle=color;c.lineWidth=lw;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
+function generateDayScenario(){
+ const anomalyPipe=Math.floor(Math.random()*4),tpl=SCENARIO_TEMPLATES[(day+week+Math.floor(Math.random()*2))%3];
+ todayScenario={anomalyPipe,...tpl,datasetType:tpl.type};hasTrainedToday=false;lastAccuracy=0;revealedPipeIndex=null;trainingWasCorrect=false;
+ drawGdGraph([],[]);
+}
+function drawTitleScene(t){
+ const sky=ctx.createLinearGradient(0,0,0,380);sky.addColorStop(0,'#1c1636');sky.addColorStop(.55,'#3b2e6e');sky.addColorStop(1,'#7c6bb8');pxRect(ctx,0,0,960,380,sky);
+ ctx.fillStyle='#f7f5ff';[[110,70],[220,120],[340,55],[640,80],[790,110],[860,50]].forEach(([x,y],i)=>{let s=(Math.floor(t/25)+i)%2===0?4:2;pxRect(ctx,x,y,s,s,'#f7f5ff')});
+ ctx.beginPath();ctx.arc(760,115,32,0,Math.PI*2);ctx.fillStyle='#fff5d6';ctx.fill();ctx.beginPath();ctx.arc(774,108,28,0,Math.PI*2);ctx.fillStyle='#251d47';ctx.fill();
+ [[30,240,70,140],[110,210,85,170],[205,255,65,125],[690,220,80,160],[780,195,95,185],[885,245,60,135]].forEach(([x,y,w,h])=>{pxRect(ctx,x,y,w,h,'#231b42');for(let wy=y+16;wy<360;wy+=24)for(let wx=x+12;wx<x+w-14;wx+=20)if((wx+wy)%3===0)pxRect(ctx,wx,wy,8,10,'#ffd98e')});
+ pxRect(ctx,0,290,960,160,'#5a5375');for(let y=290;y<450;y+=20){line(ctx,0,y,960,y,'#38324d');for(let x=(y%40===0?0:30);x<960;x+=60)line(ctx,x,y,x,y+20,'#38324d')}
+ ctx.beginPath();ctx.arc(480,385,108,Math.PI,0);ctx.fillStyle='#8d84ab';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#110e1b';ctx.stroke();ctx.beginPath();ctx.arc(480,385,86,Math.PI,0);ctx.fillStyle='#181426';ctx.fill();
+ pxRect(ctx,0,445,960,235,'#46589c');pxRect(ctx,0,445,960,18,'#7a92e0');let wave=Math.sin(t*.08)*6;pxRect(ctx,408,385,144,70,'#72c7c2');for(let i=0;i<6;i++){let w=160+i*36+Math.sin(t*.1+i)*12;pxRect(ctx,480-w/2+wave,456+i*32,w,6,i%2?'#8fa8ff':'#b8f2e6')}
+ for(let x=20;x<330;x+=48)pxRect(ctx,x,436,18,12,'#6ec4a7');for(let x=630;x<930;x+=48)pxRect(ctx,x,436,18,12,'#6ec4a7');
+}
+function drawRoomScene(t){
+ pxRect(ctx,0,0,960,440,'#362d52');for(let y=16;y<430;y+=28){line(ctx,0,y,960,y,'#241d3b');let off=(Math.floor(y/28)%2)*36;for(let x=off;x<960;x+=72)line(ctx,x,y,x,y+28,'#241d3b')}
+ pxRect(ctx,0,32,960,14,'#594e7a');pxRect(ctx,0,34,960,4,'#8c7eb5');pxRect(ctx,110,32,12,410,'#4a4069');
+ pxRect(ctx,28,72,124,152,'#f7f5ff');ctx.strokeStyle='#110e1b';ctx.lineWidth=3;ctx.strokeRect(28,72,124,152);pxRect(ctx,28,72,124,28,'#ff8fab');ctx.fillStyle='#110e1b';ctx.font='bold 14px DungGeunMo';ctx.fillText(`WEEK ${week} 근무표`,42,91);
+ for(let d=0;d<7;d++){let col=d%3,row=Math.floor(d/3),x=36+col*38,y=110+row*35;ctx.strokeStyle=d===day-1?'#7c5cff':'#8d84ab';ctx.lineWidth=d===day-1?2.5:1.5;ctx.strokeRect(x,y,32,29);ctx.fillStyle='#110e1b';ctx.font='11px DungGeunMo';ctx.fillText(`${d+1}일`,x+4,y+11);if(calendarResults[d]){ctx.fillStyle=calendarResults[d]==='O'?'#1fa87a':calendarResults[d]==='△'?'#ffd2a6':'#e63956';ctx.font='bold 16px DungGeunMo';ctx.fillText(calendarResults[d],x+11,y+25)}}
+ pxRect(ctx,315,76,330,130,'#6e5678');ctx.strokeStyle='#110e1b';ctx.strokeRect(315,76,330,130);[['#fff3b0',335,92,62,56],['#bde0fe',415,96,68,52],['#ffc8dd',502,90,62,58],['#caffbf',576,102,54,48]].forEach(a=>pxRect(ctx,...a.slice(1),a[0]));
+ // 메모보드의 메모지는 비워 두고, 클릭하면 경사하강법 설명창이 열립니다.
+ pxRect(ctx,0,415,960,265,'#4b3b63');pxRect(ctx,0,415,960,16,'#7a639c');line(ctx,0,415,960,415,'#110e1b',3);
+ for(let i=0;i<4;i++){let x=175+i*147,y=275;pxRect(ctx,x,y,132,102,'#d8d2eb');ctx.strokeStyle='#110e1b';ctx.lineWidth=3;ctx.strokeRect(x,y,132,102);pxRect(ctx,x+52,y+102,28,28,'#9b91bd');pxRect(ctx,x+36,y+126,60,10,'#786e99');pxRect(ctx,x+10,y+10,112,74,'#161b2e');ctx.beginPath();ctx.arc(x+66,y+58,26,Math.PI,0);if(revealedPipeIndex===i){ctx.shadowColor='#ff6b8b';ctx.shadowBlur=18;}ctx.fillStyle=revealedPipeIndex===i?'#ff6b8b':'#3b4a75';ctx.fill();ctx.shadowBlur=0;let water='#7ae0c3';pxRect(ctx,x+14,y+58,104,22,water);ctx.fillStyle='#f7f5ff';ctx.font='12px DungGeunMo';ctx.fillText(`CAM 0${i+1}`,x+14,y+24);if(revealedPipeIndex===i){ctx.fillStyle='#ffb3d9';ctx.font='bold 11px DungGeunMo';ctx.fillText('ANALYSIS',x+38,y+48)}if(Math.floor(t/30)%2===0)pxRect(ctx,x+108,y+15,6,6,'#ff6b8b')}
+ let x=772,y=252;pxRect(ctx,x,y,138,110,'#e6e0ff');ctx.strokeStyle='#110e1b';ctx.strokeRect(x,y,138,110);pxRect(ctx,x+10,y+10,118,82,'#131021');ctx.strokeStyle='#9ef0d0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+20,y+25);ctx.quadraticCurveTo(x+45,y+75,x+115,y+78);ctx.stroke();ctx.fillStyle='#b8a9ff';ctx.font='12px DungGeunMo';ctx.fillText('AI-GRADIENT',x+22,y+24);pxRect(ctx,x+12,y+114,114,46,'#b8b0d4');ctx.strokeRect(x+12,y+114,114,46);pxRect(ctx,x+22,y+126,44,6,'#110e1b');pxRect(ctx,x+102,y+126,10,10,'#9ef0d0');
+}
+function renderCctvNoise(){
+ const canvas=document.getElementById('cctv-canvas');
+ const c=canvas.getContext('2d');
+ const w=canvas.width,h=canvas.height;
+ pxRect(c,0,0,w,h,'#080710');
+ // 학습 전에는 신호가 잡히지 않는 화면만 보여 준다.
+ for(let y=0;y<h;y+=4){
+  for(let x=0;x<w;x+=4){
+   const v=Math.random();
+   const shade=Math.floor(35+v*150);
+   const alpha=0.18+Math.random()*0.55;
+   c.fillStyle=`rgba(${shade},${shade},${Math.min(255,shade+18)},${alpha})`;
+   c.fillRect(x,y,2+Math.floor(Math.random()*3),2+Math.floor(Math.random()*3));
+  }
+ }
+ for(let y=3;y<h;y+=9){c.fillStyle='rgba(255,255,255,0.10)';c.fillRect(0,y,w,1)}
+} 
+function renderCctvDetail(i){
+ const c=document.getElementById('cctv-canvas').getContext('2d'),bad=todayScenario.anomalyPipe===i;
+ pxRect(c,0,0,640,400,'#141124');
+ c.beginPath();c.arc(320,275,220,Math.PI,0);c.fillStyle='#2d2647';c.fill();c.lineWidth=5;c.strokeStyle='#f7f5ff';c.stroke();
+ c.beginPath();c.arc(320,275,170,Math.PI,0);c.fillStyle='#19152b';c.fill();
+ let water='#64dfdf';if(bad)water=['#4ea8de','#9e5a63','#c77dff'][todayScenario.datasetType];pxRect(c,0,275,640,125,water);
+ if(bad&&todayScenario.datasetType===0){c.strokeStyle='#ff6b8b';c.lineWidth=4;c.beginPath();c.moveTo(235,155);c.lineTo(260,195);c.lineTo(242,225);c.lineTo(270,265);c.stroke()}
+ else if(bad&&todayScenario.datasetType===1)[[165,300,55,28],[315,315,72,32],[455,290,48,25]].forEach(a=>pxRect(c,...a,'#4a252c'));
+ else if(bad&&todayScenario.datasetType===2)[[200,250],[290,225],[390,250],[445,215]].forEach(([x,y])=>{c.beginPath();c.arc(x,y,14,0,Math.PI*2);c.fillStyle='#f3c4fb';c.fill()});
+ c.fillStyle='#f7f5ff';c.font='18px DungGeunMo';c.fillText(`REC ● SEWER_CAM_0${i+1} [WEEK ${week} - DAY ${day}]`,20,32);
+}
+function drawGdGraph(losses,accs){
+ const c=document.getElementById('gd-graph').getContext('2d');pxRect(c,0,0,365,205,'#120f1d');c.strokeStyle='#282240';c.lineWidth=1;
+ for(let x=35;x<355;x+=40){c.beginPath();c.moveTo(x,15);c.lineTo(x,180);c.stroke()}for(let y=20;y<=180;y+=40){c.beginPath();c.moveTo(35,y);c.lineTo(355,y);c.stroke()}
+ c.strokeStyle='#f7f5ff';c.lineWidth=2;c.beginPath();c.moveTo(35,15);c.lineTo(35,180);c.lineTo(355,180);c.stroke();if(!losses.length)return;
+ const step=310/Math.max(1,losses.length-1);
+ [[losses,'#ff6b8b',v=>180-Math.min(2,Math.max(0,v))/2*155],[accs,'#9ef0d0',v=>180-v/100*155]].forEach(([arr,color,yfn])=>{c.strokeStyle=color;c.lineWidth=2.5;c.beginPath();arr.forEach((v,i)=>{let x=35+i*step,y=yfn(v);if(i===0)c.moveTo(x,y);else c.lineTo(x,y)});c.stroke()});
+ c.fillStyle='#ff6b8b';c.font='12px DungGeunMo';c.fillText('— Loss(오차)',44,28);c.fillStyle='#9ef0d0';c.fillText('— Accuracy(정확도)',140,28);
+}
+function startDialogue(lines,onFinish=null){dialogueQueue=lines.slice();dialogueFinishedCallback=onFinish;document.getElementById('dialogue-bar').style.display='block';advanceDialogue()}
+function advanceDialogue(){
+ if(dialogueQueue.length===0){document.getElementById('dialogue-bar').style.display='none';const cb=dialogueFinishedCallback;dialogueFinishedCallback=null;if(cb)cb();return}
+ const n=dialogueQueue.shift();document.getElementById('dialogue-speaker').textContent=n.speaker;document.getElementById('dialogue-text').textContent=n.text;
+}
+document.getElementById('start-btn').addEventListener('click',()=>{
+ if(screenState!=='TITLE')return;screenState='TRANSITION';document.getElementById('start-btn').disabled=true;document.getElementById('title-overlay').classList.add('zoom-out');
+ setTimeout(()=>{screenState='ROOM';document.getElementById('title-overlay').style.display='none';document.getElementById('room-hotspots').style.display='block';generateDayScenario();startDialogue([{speaker:'나',text:'...여긴 지하 하수관 통합 관제실.\n벽돌 틈 사이로 물 흐르는 소리가 희미하게 들려온다.'},{speaker:'나',text:'오늘부터 7일 동안 네 개의 하수관 중 이상이 생긴 곳을 매일 찾아내야 해.\n먼저 4개의 CCTV 모니터를 살펴보고, 오른쪽 컴퓨터에서 오늘의 이상 징후를 분석하자.'}])},1050);
+});
+function openCctv(i){
+ if(screenState!=='ROOM'||!todayScenario)return;
+ activeCctvIndex=i;
+ document.getElementById('cctv-modal-title').textContent=`CAM 0${i+1}`;
+ const selectBtn=document.getElementById('cctv-select-btn');
+ if(hasTrainedToday&&revealedPipeIndex!==null){
+  renderCctvDetail(i);
+  selectBtn.style.display='block';
+ }else{
+  renderCctvNoise();
+  selectBtn.style.display='none';
+ }
+ document.getElementById('cctv-modal').style.display='flex';
+}
+function confirmCctvSelection(){
+ if(!hasTrainedToday||activeCctvIndex===null)return;
+ submitPrediction(activeCctvIndex);
+}
+
+function openPcModal(){if(screenState!=='ROOM'||!todayScenario)return;document.getElementById('pc-problem-text').textContent=todayScenario.clue;document.getElementById('pc-problem-metrics').textContent=todayScenario.metricsBad;document.getElementById('pc-modal').style.display='flex';if(!hasTrainedToday)drawGdGraph([],[])}
+function openMemoModal(){if(screenState!=='ROOM')return;document.getElementById('memo-modal').style.display='flex'}
+function closeModals(){['cctv-modal','pc-modal','memo-modal','calendar-modal'].forEach(id=>document.getElementById(id).style.display='none')}
+function openCalendarModal(){if(screenState!=='ROOM')return;renderLargeCalendar();document.getElementById('calendar-modal').style.display='flex'}
+function renderLargeCalendar(){const grid=document.getElementById('calendar-large-grid');grid.innerHTML='';for(let d=0;d<7;d++){const card=document.createElement('div');card.className='calendar-day'+(d===day-1?' current':'');const result=calendarResults[d];card.innerHTML=`<div class="day-label">${d+1}일차</div><div class="day-result ${result==='X'?'fail':result==='△'?'partial':result===null?'pending':''}">${result??'대기'}</div>`;grid.appendChild(card)}}
+function selectDataset(i){selectedDataset=i;for(let n=0;n<3;n++)document.getElementById(`ds-${n}`).classList.toggle('selected',n===i)}
+function updateGdParams(){document.getElementById('lr-val').textContent=Number(document.getElementById('lr-slider').value).toFixed(2);document.getElementById('epoch-val').textContent=document.getElementById('epoch-slider').value+'회'}
+function runGradientDescent(){
+ if(!todayScenario)return;
+ const lr=Number(document.getElementById('lr-slider').value);
+ const epochs=Number(document.getElementById('epoch-slider').value);
+ const correctDataset=selectedDataset===todayScenario.datasetType;
+ const stableRate=lr>=0.12&&lr<=0.28;
+ const enoughEpochs=epochs>=20;
+ const target=correctDataset?0.25:1.2;
+ let w=1.4;
+ const losses=[],accs=[];
+ let diverged=false;
+ for(let e=0;e<=epochs;e++){
+  const loss=Math.pow(w-target,2);
+  losses.push(Math.min(4,loss));
+  const accuracy=correctDataset?Math.max(5,Math.min(99,100-loss*100)):Math.max(10,Math.min(55,55-loss*20));
+  accs.push(accuracy);
+  const gradient=2*(w-target);
+  w=w-lr*gradient;
+  if(!Number.isFinite(w)||Math.abs(w)>10)diverged=true;
+ }
+ const finalLoss=losses[losses.length-1];
+ drawGdGraph(losses,accs);
+ lastAccuracy=Math.round(accs[accs.length-1]);
+ trainingWasCorrect=correctDataset&&stableRate&&enoughEpochs&&!diverged&&finalLoss<=0.05&&lastAccuracy>=85;
+ // 학습이 끝나면 결과를 CCTV에 표시한다. 잘못 학습한 경우 정답 관은 제외한 다른 관을 무작위로 표시한다.
+ if(trainingWasCorrect){revealedPipeIndex=todayScenario.anomalyPipe;}
+ else {const alternatives=[0,1,2,3].filter(i=>i!==todayScenario.anomalyPipe);revealedPipeIndex=alternatives[Math.floor(Math.random()*alternatives.length)];}
+ hasTrainedToday=true;
+ document.getElementById('pc-modal').style.display='none';
+ // 학습 성공 여부를 별도 문구로 알려주지 않고, CCTV 화면의 결과만으로 판단하게 한다.
+
+}
+function submitPrediction(pipe){
+ if(!todayScenario||screenState!=='ROOM')return;
+ if(!hasTrainedToday||revealedPipeIndex===null){
+  document.getElementById('pc-modal').style.display='flex';
+  return;
+ }
+ closeModals();
+
+ // 정답 하수관을 골랐는지와 경사하강법 학습이 올바랐는지를 각각 평가한다.
+ const predictionCorrect=pipe===todayScenario.anomalyPipe;
+ const fullCredit=predictionCorrect&&trainingWasCorrect;
+ const partialCredit=predictionCorrect&&!trainingWasCorrect;
+
+ if(fullCredit){
+  calendarResults[day-1]='O';
+ }else if(partialCredit){
+  calendarResults[day-1]='△';
+ }else{
+  calendarResults[day-1]='X';
+ }
+
+ let resultText;
+ if(fullCredit){
+  resultText=`[${day}일차 결과 - ○ / 1점]\n경사하강법 학습과 하수관 예측이 모두 정확했다.`;
+ }else if(partialCredit){
+  resultText=`[${day}일차 결과 - △ / 0.5점]\n학습 결과는 정확하지 않았지만, CCTV 영상을 분석해 실제 이상 하수관을 찾아냈다.`;
+ }else{
+  resultText=`[${day}일차 결과 - X / 0점]\n실제 이상 하수관을 찾지 못했다.`;
+ }
+
+ const result={speaker:'나',text:resultText};
+ renderLargeCalendar();
+ if(day<7){
+  day++;
+  generateDayScenario();
+  startDialogue([result,{speaker:'나',text:`날이 밝았다. ${week}주차 ${day}일차 근무 시작...\n오늘도 CCTV 단서를 확인하고 컴퓨터에서 경사하강법으로 AI를 학습시켜야 한다.`}]);
+ }else{
+  startDialogue([result,{speaker:'나',text:'7일간의 수습 근무가 모두 종료되었다.\n벽면 달력의 기록을 바탕으로 최종 평가를 기다린다...'}],showEnding);
+ }
+}
+function showEnding(){
+ screenState='ENDING';document.getElementById('room-hotspots').style.display='none';document.getElementById('ending-overlay').style.display='flex';
+ const score=calendarResults.reduce((sum,x)=>sum+(x==='O'?1:x==='△'?0.5:0),0),scoreLabel=Number.isInteger(score)?String(score):score.toFixed(1),c=document.getElementById('ending-canvas').getContext('2d'),tag=document.getElementById('ending-tag'),txt=document.getElementById('ending-text'),btn=document.getElementById('ending-action-btn');
+ if(score>=5){
+  pxRect(c,0,0,904,390,'#2a224a');pxRect(c,0,270,904,120,'#9ef0d0');['#ffb3d9','#fff3b0','#b8a9ff','#9ef0d0'].forEach((col,i)=>{for(let k=0;k<14;k++)pxRect(c,(k*67+i*23)%880,(k*43+i*31)%250,8,8,col)});
+  pxRect(c,412,125,80,90,'#ffe5d9');pxRect(c,406,105,92,34,'#110e1b');pxRect(c,428,158,10,6,'#110e1b');pxRect(c,466,158,10,6,'#110e1b');pxRect(c,442,182,20,10,'#ff6b8b');pxRect(c,392,215,120,95,'#b8a9ff');
+  tag.textContent=`ENDING 01 // 정식 승진 (점수 ${scoreLabel} / 7점)`;txt.textContent=`"...해냈다. 일주일 동안의 기록이 전부 인정받았어."\n축축하고 어두웠던 지하 관제실의 공기가 오늘따라 따뜻하게 느껴진다.\n책상 위에는 '수석 수로 데이터 관제사 승진 임명장'이 놓여 있다.\n거울 속에 비친 내 얼굴이 오랜만에 환하게 웃고 있었다.`;btn.textContent='처음부터 다시 플레이 ↺';btn.dataset.mode='RESTART';
+ }else if(score>=3){
+  pxRect(c,0,0,904,390,'#1e1936');pxRect(c,290,95,324,200,'#f7f5ff');c.strokeStyle='#110e1b';c.lineWidth=4;c.strokeRect(290,95,324,200);c.fillStyle='#110e1b';c.font='bold 26px DungGeunMo';c.fillText(`WEEK ${week+1} 근무 연장`,365,175);c.font='18px DungGeunMo';c.fillText(`점수 ${scoreLabel}점 - 계약 유지`,368,220);
+  tag.textContent=`ENDING 02 // 현상 유지 및 연속 근무 (점수 ${scoreLabel} / 7점)`;txt.textContent=`"큰 사고는 막았지만... 아직 완벽하다고 하긴 어렵군."\n상부의 짧은 메모와 함께 달력이 한 장 더 넘어갔다.\n승진도, 해고도 아닌 평범한 내일이 다시 시작된다.\n커피를 한 모금 마시고, 새로운 7일의 모니터 전원을 다시 켰다.`;btn.textContent=`${week+1}주차 근무 이어하기 ▶`;btn.dataset.mode='NEXT_WEEK';
+ }else{
+  pxRect(c,0,0,904,390,'#110e1b');c.strokeStyle='#6c638c';c.lineWidth=2;for(let r=0;r<45;r++){let x=r*47%904,y=r*31%350;c.beginPath();c.moveTo(x,y);c.lineTo(x-8,y+24);c.stroke()}pxRect(c,395,225,114,78,'#b08968');c.strokeStyle='#f7f5ff';c.strokeRect(395,225,114,78);pxRect(c,415,195,26,30,'#ffb3d9');pxRect(c,455,190,34,35,'#8fa8ff');
+  tag.textContent=`ENDING 03 // 계약 해지 (점수 ${scoreLabel} / 7점)`;txt.textContent=`"결국 실패했다. 입사 일주일 만에 퇴사라니..."\n품에 안은 종이상자 속에는 머그컵과 낡은 관제 매뉴얼뿐이다.\n빗방울이 떨어지는 강물 위로 내가 놓쳐버린 하수관의 소리가 울린다.\n다음번엔... 기울기가 가리키는 방향을 절대 놓치지 않을 텐데.`;btn.textContent='1일차부터 다시 도전 ↺';btn.dataset.mode='RESTART';
+ }
+}
+function handleEndingNext(){
+ const mode=document.getElementById('ending-action-btn').dataset.mode;document.getElementById('ending-overlay').style.display='none';calendarResults=Array(7).fill(null);day=1;if(mode==='NEXT_WEEK')week++;else week=1;
+ screenState='ROOM';document.getElementById('room-hotspots').style.display='block';generateDayScenario();startDialogue([{speaker:'나',text:`${week}주차 1일차 근무를 시작한다.\n이번 주에는 반드시 모든 이상 징후를 잡아내자.`}]);
+}
+function loop(){frame++;if(screenState==='TITLE'||screenState==='TRANSITION')drawTitleScene(frame);else if(screenState==='ROOM')drawRoomScene(frame);requestAnimationFrame(loop)}
+loop();
+</script>
+</body>
+</html>
